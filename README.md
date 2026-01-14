@@ -15,8 +15,8 @@ This application helps reduce impulsive app usage by introducing a configurable 
 ## Screenshots
 
 <div align="center" style="display: flex; justify-content: space-around;">
-  <img src="https://github.com/BrunoRochaDev/FrictionTimer/raw/main/screenshots/screenshot_1.png" width="30%" />
-  <img src="https://github.com/BrunoRochaDev/FrictionTimer/raw/main/screenshots/screenshot_2.png" width="30%" />
+  <img src="https://github.com/BrunoRochaDev/FrictionTimer/raw/main/screenshots/screenshot_1.jpg" width="30%" />
+  <img src="https://github.com/BrunoRochaDev/FrictionTimer/raw/main/screenshots/screenshot_2.jpg" width="30%" />
 </div>
 
 ## Where To Get
