@@ -48,7 +48,7 @@ function Home() {
         />
       </main>
       <footer className="container-app py-6 text-center text-[10px] uppercase tracking-widest text-muted-foreground">
-        breathe before you scroll
+      <a href="https://brunorochamoura.com">Made by brunorochamoura.com</a>
       </footer>
     </div>
   );
@@ -126,13 +126,13 @@ function AppCard({ app }: { app: FrictionApp }) {
       <div className="shrink-0 flex flex-col items-end gap-1 text-[11px]">
         <div className="flex items-center gap-1.5">
           <span className="text-muted-foreground">wait</span>
-          <span className="font-mono text-warning">
+          <span className="font-mono text-foreground">
             {formatDuration(app.waitSeconds)}
           </span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="text-muted-foreground">open</span>
-          <span className="font-mono text-success">
+          <span className="font-mono text-foreground">
             {formatDuration(app.durationSeconds)}
           </span>
         </div>
@@ -152,8 +152,8 @@ function PermissionsSection({
   data: ServiceStatus;
   onToggle: (key: keyof ServiceStatus) => void;
 }) {
-  // Reserve the warning's vertical space so the layout doesn't jump when it
-  // toggles. Width is also stable thanks to `scrollbar-gutter: stable`.
+  // Keep the warning card's full footprint in the layout so the page
+  // disposition stays identical whether the warning is shown or not.
   const anyDisabled = !loading && (!data.overlay || !data.accessibility);
 
   return (
@@ -190,13 +190,15 @@ function PermissionsSection({
         )}
       </div>
 
-      {/* Always-rendered slot keeps total height stable across states. */}
-      <div aria-live="polite" className="min-h-[2.25rem]">
-        {anyDisabled && (
-          <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
-            ⚠ Friction Timer needs both permissions to intercept apps. Tap a button above to grant.
-          </p>
-        )}
+      <div aria-live="polite">
+        <p
+          aria-hidden={!anyDisabled}
+          className={`rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive ${
+            anyDisabled ? "" : "invisible"
+          }`}
+        >
+          Friction Timer needs both permissions to intercept apps. Tap a button above to grant.
+        </p>
       </div>
     </section>
   );

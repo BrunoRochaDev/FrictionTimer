@@ -144,16 +144,13 @@ function Stepper({ stage }: { stage: Stage }) {
     <ol className="flex items-center gap-2 text-[11px] uppercase tracking-widest">
       {items.map((label, i) => {
         const active = i === stage;
-        const done = i < stage;
         return (
           <li key={label} className="flex items-center gap-2">
             <span
               className={`inline-flex h-5 w-5 items-center justify-center rounded-full border text-[10px] font-bold ${
                 active
                   ? "border-primary bg-primary text-primary-foreground"
-                  : done
-                    ? "border-success bg-success text-primary-foreground"
-                    : "border-border text-muted-foreground"
+                  : "border-border text-muted-foreground"
               }`}
             >
               {i + 1}
@@ -265,7 +262,6 @@ function StageTime({
       <TimeBlock
         label="Wait time"
         hint="How long to wait before the app unlocks."
-        accent="warning"
         h={wait.h}
         m={wait.m}
         s={wait.s}
@@ -276,7 +272,6 @@ function StageTime({
       <TimeBlock
         label="Duration"
         hint="How long the app stays unlocked once allowed in."
-        accent="success"
         h={dur.h}
         m={dur.m}
         s={dur.s}
@@ -291,7 +286,6 @@ function StageTime({
 function TimeBlock({
   label,
   hint,
-  accent,
   h,
   m,
   s,
@@ -299,17 +293,15 @@ function TimeBlock({
 }: {
   label: string;
   hint: string;
-  accent: "warning" | "success";
   h: number;
   m: number;
   s: number;
   onChange: (h: number, m: number, s: number) => void;
 }) {
-  const color = accent === "warning" ? "text-warning" : "text-success";
   return (
     <div className="rounded-lg border border-border bg-card p-4 space-y-3">
       <div>
-        <div className={`text-xs font-bold uppercase tracking-widest ${color}`}>
+        <div className="text-xs font-bold uppercase tracking-widest text-foreground">
           {label}
         </div>
         <div className="text-[11px] text-muted-foreground">{hint}</div>
