@@ -1,5 +1,7 @@
+mod permissions;
 mod storage;
 
+use permissions::{get_service_status, open_service_settings};
 use storage::{AppState, CreateAppInput, FrictionApp, UpdateAppInput};
 use tauri::{Manager, State};
 
@@ -42,9 +44,16 @@ pub fn run() {
             app.manage(AppState::new(db_path));
             Ok(())
         })
+        .plugin(permissions::init())
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![
-            list_apps, get_app, create_app, update_app, delete_app
+            list_apps,
+            get_app,
+            create_app,
+            update_app,
+            delete_app,
+            get_service_status,
+            open_service_settings
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

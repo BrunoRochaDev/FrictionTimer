@@ -15,6 +15,7 @@ import type {
   FrictionApp,
   FrictionAppDraft,
   InstalledApp,
+  ServicePermissionKey,
   ServiceStatus,
 } from "./types";
 
@@ -119,21 +120,52 @@ export function useAppMutations() {
 // ---------- Service status ----------
 
 export function useServiceStatus() {
+  const [actionError, setActionError] = useState<Error | null>(null);
   const state = useAsync<ServiceStatus>(
-    () => api.getStatus(),
+    () => api.getServiceStatus(),
     { overlay: false, accessibility: false },
     [],
   );
 
-  useEffect(() => api.subscribe(state.refresh), [state.refresh]);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
 
-  const toggle = useCallback(
-    (key: keyof ServiceStatus) =>
-      api.setStatus({ [key]: !state.data[key] } as Partial<ServiceStatus>),
-    [state.data],
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") {
+        setActionError(null);
+        state.refresh();
+      }
+    };
+
+    const refreshOnFocus = () => {
+      setActionError(null);
+      state.refresh();
+    };
+
+    window.addEventListener("focus", refreshOnFocus);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+
+    return () => {
+      window.removeEventListener("focus", refreshOnFocus);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+    };
+  }, [state.refresh]);
+
+  const openSettings = useCallback(
+    async (key: ServicePermissionKey) => {
+      setActionError(null);
+      try {
+        await api.openServiceSettings(key);
+      } catch (err) {
+        const error = err instanceof Error ? err : new Error(String(err));
+        setActionError(error);
+        throw error;
+      }
+    },
+    [],
   );
 
-  return { ...state, toggle };
+  return { ...state, error: actionError ?? state.error, openSettings };
 }
 
 // ---------- Installed-apps search (mocked device inventory) ----------

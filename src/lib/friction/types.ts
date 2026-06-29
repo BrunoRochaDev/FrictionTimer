@@ -14,6 +14,8 @@ export type ServiceStatus = {
   accessibility: boolean;
 };
 
+export type ServicePermissionKey = keyof ServiceStatus;
+
 export type InstalledApp = {
   appId: string;
   name: string;

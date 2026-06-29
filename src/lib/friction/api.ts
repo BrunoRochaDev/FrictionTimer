@@ -9,36 +9,17 @@ import type {
   FrictionApp,
   FrictionAppDraft,
   InstalledApp,
+  ServicePermissionKey,
   ServiceStatus,
 } from "./types";
 
-const STATUS_KEY = "friction-timer:status";
 const CHANGE_EVENT = "friction-store-change";
 
 // Simulated latency for mocks so loading states still render in dev.
-const LATENCY_MS = { read: 350, write: 200, search: 250 } as const;
+const LATENCY_MS = { search: 250 } as const;
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function readLocalJSON<T>(key: string, fallback: T): T {
-  if (typeof window === "undefined") return fallback;
-  try {
-    const raw = window.localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-function writeLocalJSON<T>(key: string, value: T): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    /* ignore quota / private-mode errors */
-  }
 }
 
 function emitChange(key: string): void {
@@ -91,20 +72,12 @@ export async function deleteApp(id: string): Promise<void> {
 
 // ---------- Service status (overlay / accessibility permissions) ----------
 
-const DEFAULT_STATUS: ServiceStatus = { overlay: false, accessibility: false };
-
-export async function getStatus(): Promise<ServiceStatus> {
-  await delay(LATENCY_MS.read);
-  return readLocalJSON<ServiceStatus>(STATUS_KEY, DEFAULT_STATUS);
+export async function getServiceStatus(): Promise<ServiceStatus> {
+  return invoke<ServiceStatus>("get_service_status");
 }
 
-export async function setStatus(patch: Partial<ServiceStatus>): Promise<ServiceStatus> {
-  await delay(LATENCY_MS.write);
-  const current = readLocalJSON<ServiceStatus>(STATUS_KEY, DEFAULT_STATUS);
-  const next = { ...current, ...patch };
-  writeLocalJSON(STATUS_KEY, next);
-  emitChange(STATUS_KEY);
-  return next;
+export async function openServiceSettings(kind: ServicePermissionKey): Promise<void> {
+  await invoke("open_service_settings", { kind });
 }
 
 // ---------- Installed apps (mocked device inventory) ----------

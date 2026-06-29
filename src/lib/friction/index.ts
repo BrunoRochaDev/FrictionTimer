@@ -8,8 +8,8 @@ export {
   createApp,
   updateApp,
   deleteApp,
-  getStatus,
-  setStatus,
+  getServiceStatus,
+  openServiceSettings,
   listInstalledApps,
   subscribe,
 } from "./api";
