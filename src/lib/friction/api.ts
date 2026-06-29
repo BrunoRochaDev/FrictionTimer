@@ -1,12 +1,10 @@
 /**
  * Friction Timer data layer.
  *
- * Everything that touches persistence goes through this module. Components
- * never read `localStorage` (or any future API) directly — they call these
- * async functions. To swap in a real backend later, replace the bodies; the
- * signatures and event semantics stay the same.
+ * Everything that touches persistence goes through this module.
  */
 
+import { invoke } from "@tauri-apps/api/core";
 import type {
   FrictionApp,
   FrictionAppDraft,
@@ -14,18 +12,17 @@ import type {
   ServiceStatus,
 } from "./types";
 
-const APPS_KEY = "friction-timer:apps";
 const STATUS_KEY = "friction-timer:status";
 const CHANGE_EVENT = "friction-store-change";
 
-// Simulated network latency so loading states render in dev.
+// Simulated latency for mocks so loading states still render in dev.
 const LATENCY_MS = { read: 350, write: 200, search: 250 } as const;
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function readJSON<T>(key: string, fallback: T): T {
+function readLocalJSON<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
   try {
     const raw = window.localStorage.getItem(key);
@@ -35,14 +32,18 @@ function readJSON<T>(key: string, fallback: T): T {
   }
 }
 
-function writeJSON<T>(key: string, value: T): void {
+function writeLocalJSON<T>(key: string, value: T): void {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(key, JSON.stringify(value));
-    window.dispatchEvent(new CustomEvent(CHANGE_EVENT, { detail: { key } }));
   } catch {
     /* ignore quota / private-mode errors */
   }
+}
+
+function emitChange(key: string): void {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new CustomEvent(CHANGE_EVENT, { detail: { key } }));
 }
 
 /** Subscribe to any change in the friction data layer. Returns an unsubscribe. */
@@ -61,20 +62,16 @@ export function subscribe(listener: () => void): () => void {
 // ---------- Friction apps ----------
 
 export async function listApps(): Promise<FrictionApp[]> {
-  await delay(LATENCY_MS.read);
-  return readJSON<FrictionApp[]>(APPS_KEY, []);
+  return invoke<FrictionApp[]>("list_apps");
 }
 
 export async function getApp(id: string): Promise<FrictionApp | null> {
-  await delay(LATENCY_MS.read);
-  return readJSON<FrictionApp[]>(APPS_KEY, []).find((a) => a.id === id) ?? null;
+  return invoke<FrictionApp | null>("get_app", { id });
 }
 
 export async function createApp(draft: FrictionAppDraft): Promise<FrictionApp> {
-  await delay(LATENCY_MS.write);
-  const app: FrictionApp = { id: crypto.randomUUID(), ...draft };
-  const current = readJSON<FrictionApp[]>(APPS_KEY, []);
-  writeJSON(APPS_KEY, [...current, app]);
+  const app = await invoke<FrictionApp>("create_app", { input: draft });
+  emitChange("apps");
   return app;
 }
 
@@ -82,24 +79,14 @@ export async function updateApp(
   id: string,
   patch: Partial<FrictionAppDraft>,
 ): Promise<FrictionApp> {
-  await delay(LATENCY_MS.write);
-  const current = readJSON<FrictionApp[]>(APPS_KEY, []);
-  const idx = current.findIndex((a) => a.id === id);
-  if (idx < 0) throw new Error(`App not found: ${id}`);
-  const next = { ...current[idx], ...patch };
-  const out = [...current];
-  out[idx] = next;
-  writeJSON(APPS_KEY, out);
-  return next;
+  const app = await invoke<FrictionApp>("update_app", { id, patch });
+  emitChange("apps");
+  return app;
 }
 
 export async function deleteApp(id: string): Promise<void> {
-  await delay(LATENCY_MS.write);
-  const current = readJSON<FrictionApp[]>(APPS_KEY, []);
-  writeJSON(
-    APPS_KEY,
-    current.filter((a) => a.id !== id),
-  );
+  await invoke("delete_app", { id });
+  emitChange("apps");
 }
 
 // ---------- Service status (overlay / accessibility permissions) ----------
@@ -108,14 +95,15 @@ const DEFAULT_STATUS: ServiceStatus = { overlay: false, accessibility: false };
 
 export async function getStatus(): Promise<ServiceStatus> {
   await delay(LATENCY_MS.read);
-  return readJSON<ServiceStatus>(STATUS_KEY, DEFAULT_STATUS);
+  return readLocalJSON<ServiceStatus>(STATUS_KEY, DEFAULT_STATUS);
 }
 
 export async function setStatus(patch: Partial<ServiceStatus>): Promise<ServiceStatus> {
   await delay(LATENCY_MS.write);
-  const current = readJSON<ServiceStatus>(STATUS_KEY, DEFAULT_STATUS);
+  const current = readLocalJSON<ServiceStatus>(STATUS_KEY, DEFAULT_STATUS);
   const next = { ...current, ...patch };
-  writeJSON(STATUS_KEY, next);
+  writeLocalJSON(STATUS_KEY, next);
+  emitChange(STATUS_KEY);
   return next;
 }
 
