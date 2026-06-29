@@ -1,7 +1,7 @@
 [package]
 name = "friction_timer"
-version = "0.1.0"
-description = "A Tauri App"
+version = "2.0.0"
+description = " Android app that introduces a short delay whenever you open specified apps "
 authors = ["you"]
 edition = "2021"
 
