@@ -15,13 +15,6 @@ import type {
 
 const CHANGE_EVENT = "friction-store-change";
 
-// Simulated latency for mocks so loading states still render in dev.
-const LATENCY_MS = { search: 250 } as const;
-
-function delay(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
 function emitChange(key: string): void {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new CustomEvent(CHANGE_EVENT, { detail: { key } }));
@@ -80,30 +73,10 @@ export async function openServiceSettings(kind: ServicePermissionKey): Promise<v
   await invoke("open_service_settings", { kind });
 }
 
-// ---------- Installed apps (mocked device inventory) ----------
-
-const MOCK_INSTALLED: InstalledApp[] = [
-  { appId: "com.instagram.android", name: "Instagram" },
-  { appId: "com.zhiliaoapp.musically", name: "TikTok" },
-  { appId: "com.twitter.android", name: "X" },
-  { appId: "com.reddit.frontpage", name: "Reddit" },
-  { appId: "com.google.android.youtube", name: "YouTube" },
-  { appId: "com.facebook.katana", name: "Facebook" },
-  { appId: "com.snapchat.android", name: "Snapchat" },
-  { appId: "com.netflix.mediaclient", name: "Netflix" },
-  { appId: "com.discord", name: "Discord" },
-  { appId: "com.whatsapp", name: "WhatsApp" },
-  { appId: "com.spotify.music", name: "Spotify" },
-  { appId: "com.amazon.mShop.android.shopping", name: "Amazon" },
-];
+// ---------- Installed apps ----------
 
 export async function listInstalledApps(query = ""): Promise<InstalledApp[]> {
-  await delay(LATENCY_MS.search);
-  const q = query.trim().toLowerCase();
-  if (!q) return MOCK_INSTALLED;
-  return MOCK_INSTALLED.filter(
-    (a) => a.name.toLowerCase().includes(q) || a.appId.toLowerCase().includes(q),
-  );
+  return invoke<InstalledApp[]>("list_installed_apps", { query });
 }
 
 // ---------- Formatting helpers ----------
