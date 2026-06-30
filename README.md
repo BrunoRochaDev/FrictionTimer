@@ -28,7 +28,43 @@ When you open an app you have added to the list, Friction Timer shows an overlay
 
 Download the latest APK from the [Releases](https://github.com/BrunoRochaDev/FrictionTimer/releases) page.
 
-You can also build the app in Android Studio with **Build > Build Bundle(s) / APK(s) > Build APK(s)**.
+## Build it yourself
+
+This project is set up for Android with Tauri 2.
+
+### Prerequisites
+
+- Node.js and `pnpm`
+- Rust stable via `rustup`
+- Android SDK and an emulator or USB-connected device
+
+Install the Rust Android targets once:
+
+```bash
+rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
+```
+
+### Build from the command line
+
+Install dependencies:
+
+```bash
+pnpm install
+```
+
+Run the app on a connected Android device or emulator:
+
+```bash
+pnpm tauri android dev
+```
+
+Create a release build:
+
+```bash
+pnpm tauri android build
+```
+
+Generated APKs are placed under `src-tauri/gen/android/app/build/outputs/apk/`.
 
 ## How it works
 
