@@ -22,9 +22,6 @@ class FrictionOverlayController(
   private var countDownTimer: CountDownTimer? = null
   private var activeConfig: FrictionAppConfig? = null
 
-  val activePackage: String?
-    get() = activeConfig?.appId
-
   fun isShowingFor(packageName: String): Boolean =
     activeConfig?.appId == packageName && overlayView != null
 
@@ -68,16 +65,14 @@ class FrictionOverlayController(
 
     overlayView = view
     activeConfig = config
-    if (BuildConfig.DEBUG) {
-      Log.d(TAG, "Showing overlay for ${config.appId}")
-    }
+    debugLog { "Showing overlay for ${config.appId}" }
     startCountdown(proceedButton, config.waitSeconds)
     return true
   }
 
   fun dismiss() {
-    if (BuildConfig.DEBUG && (overlayView != null || activeConfig != null)) {
-      Log.d(TAG, "Dismissing overlay for ${activeConfig?.appId}")
+    if (overlayView != null || activeConfig != null) {
+      debugLog { "Dismissing overlay for ${activeConfig?.appId}" }
     }
     countDownTimer?.cancel()
     countDownTimer = null
@@ -117,6 +112,12 @@ class FrictionOverlayController(
   private fun unlockProceedButton(button: Button) {
     button.isEnabled = true
     button.text = context.getString(R.string.friction_overlay_proceed)
+  }
+
+  private inline fun debugLog(message: () -> String) {
+    if (BuildConfig.DEBUG) {
+      Log.d(TAG, message())
+    }
   }
 
   companion object {

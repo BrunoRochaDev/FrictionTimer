@@ -56,11 +56,8 @@ class FrictionAccessibilityService : AccessibilityService() {
       return
     }
 
-    if (BuildConfig.DEBUG) {
-      Log.d(
-        TAG,
-        "Accessibility event=${eventTypeName(eventType)} packageHint=${packageName.ifBlank { "<none>" }} activeOverlay=${foregroundSessionState.activeOverlayPackage}",
-      )
+    debugLog {
+      "Accessibility event=${eventTypeName(eventType)} packageHint=${packageName.ifBlank { "<none>" }} activeOverlay=${foregroundSessionState.activeOverlayPackage}"
     }
     scheduleForegroundProcessing(packageName)
   }
@@ -92,19 +89,16 @@ class FrictionAccessibilityService : AccessibilityService() {
     performGlobalAction(GLOBAL_ACTION_HOME)
   }
 
-  private fun scheduleForegroundProcessing(packageHint: String) {
-    pendingForegroundPackageHint = packageHint.ifBlank { null }
+  private fun scheduleForegroundProcessing(packageHint: String?) {
+    pendingForegroundPackageHint = packageHint?.trim()?.ifBlank { null }
     mainHandler.removeCallbacks(processForegroundRunnable)
     mainHandler.postDelayed(processForegroundRunnable, FOREGROUND_SETTLE_DELAY_MS)
   }
 
   private fun processForegroundPackage(packageHint: String?) {
     val resolvedPackage = resolveForegroundPackage(packageHint)
-    if (BuildConfig.DEBUG) {
-      Log.d(
-        TAG,
-        "Processing foreground packageHint=${packageHint ?: "<none>"} resolved=${resolvedPackage ?: "<none>"} root=${normalizePackageLabel(rootInActiveWindow?.packageName?.toString())} state=${foregroundSessionState.debugState()}",
-      )
+    debugLog {
+      "Processing foreground packageHint=${normalizePackageLabel(packageHint)} resolved=${normalizePackageLabel(resolvedPackage)} root=${normalizePackageLabel(rootInActiveWindow?.packageName?.toString())} state=${foregroundSessionState.debugState()}"
     }
 
     val transition = foregroundSessionState.onForegroundObserved(resolvedPackage)
@@ -113,10 +107,8 @@ class FrictionAccessibilityService : AccessibilityService() {
     }
 
     if (transition.shouldRecheckForeground) {
-      if (BuildConfig.DEBUG) {
-        Log.d(TAG, "Holding overlay until foreground exit is confirmed")
-      }
-      scheduleForegroundProcessing("")
+      debugLog { "Holding overlay until foreground exit is confirmed" }
+      scheduleForegroundProcessing(null)
     }
 
     maybeShowOverlayFor(transition.packageToEvaluateForOverlay)
@@ -145,9 +137,7 @@ class FrictionAccessibilityService : AccessibilityService() {
 
     if (overlayController.show(config, message)) {
       foregroundSessionState.onOverlayShown(config.appId)
-      if (BuildConfig.DEBUG) {
-        Log.d(TAG, "Overlay shown for ${config.appId}")
-      }
+      debugLog { "Overlay shown for ${config.appId}" }
     }
   }
 
@@ -208,9 +198,7 @@ class FrictionAccessibilityService : AccessibilityService() {
   }
 
   private fun dismissOverlay(reason: String) {
-    if (BuildConfig.DEBUG) {
-      Log.d(TAG, "Dismissing overlay reason=$reason activeOverlay=${foregroundSessionState.activeOverlayPackage}")
-    }
+    debugLog { "Dismissing overlay reason=$reason activeOverlay=${foregroundSessionState.activeOverlayPackage}" }
     overlayController.dismiss()
     foregroundSessionState.onOverlayDismissed()
   }
@@ -241,6 +229,12 @@ class FrictionAccessibilityService : AccessibilityService() {
     AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> "TYPE_WINDOW_STATE_CHANGED"
     AccessibilityEvent.TYPE_WINDOWS_CHANGED -> "TYPE_WINDOWS_CHANGED"
     else -> eventType.toString()
+  }
+
+  private inline fun debugLog(message: () -> String) {
+    if (BuildConfig.DEBUG) {
+      Log.d(TAG, message())
+    }
   }
 
   companion object {
