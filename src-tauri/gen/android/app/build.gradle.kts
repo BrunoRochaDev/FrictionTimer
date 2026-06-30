@@ -20,18 +20,27 @@ val keystoreProperties = Properties().apply {
     }
 }
 
+val releaseStoreFilePath = keystoreProperties.getProperty("storeFile")?.trim().orEmpty()
+val releaseStoreFile = if (releaseStoreFilePath.isNotEmpty()) file(releaseStoreFilePath) else null
+val hasReleaseSigning = releaseStoreFile?.exists() == true
+
+if (releaseStoreFilePath.isNotEmpty() && !hasReleaseSigning) {
+    logger.warn(
+        "Release keystore not found at '$releaseStoreFilePath'. Building an unsigned release artifact."
+    )
+}
+
 android {
     compileSdk = 36
     namespace = "com.brunorochamoura.frictiontimer"
     signingConfigs {
-        create("release") {
-            val storeFilePath = keystoreProperties.getProperty("storeFile")?.trim().orEmpty()
-            if (storeFilePath.isNotEmpty()) {
-                storeFile = file(storeFilePath)
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = releaseStoreFile
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
             }
-            storePassword = keystoreProperties.getProperty("storePassword")
-            keyAlias = keystoreProperties.getProperty("keyAlias")
-            keyPassword = keystoreProperties.getProperty("keyPassword")
         }
     }
     defaultConfig {
@@ -55,7 +64,9 @@ android {
             }
         }
         getByName("release") {
-            signingConfig = signingConfigs.getByName("release")
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             isMinifyEnabled = true
             proguardFiles(
                 *fileTree(".") { include("**/*.pro") }
