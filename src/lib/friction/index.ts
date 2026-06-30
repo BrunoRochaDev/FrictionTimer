@@ -10,6 +10,7 @@ export {
   deleteApp,
   getServiceStatus,
   openServiceSettings,
+  openExternalUrl,
   listInstalledApps,
   subscribe,
 } from "./api";

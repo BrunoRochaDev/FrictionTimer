@@ -73,6 +73,10 @@ export async function openServiceSettings(kind: ServicePermissionKey): Promise<v
   await invoke("open_service_settings", { kind });
 }
 
+export async function openExternalUrl(url: string): Promise<void> {
+  await invoke("plugin:opener|open_url", { url });
+}
+
 // ---------- Installed apps ----------
 
 export async function listInstalledApps(query = ""): Promise<InstalledApp[]> {

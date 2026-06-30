@@ -18,8 +18,10 @@ When you open an app you have added to the list, Friction Timer shows an overlay
 ## Screenshots
 
 <div align="center" style="display: flex; justify-content: space-around;">
-  <img src="https://github.com/BrunoRochaDev/FrictionTimer/raw/main/screenshots/screenshot_1.jpg" width="30%" />
-  <img src="https://github.com/BrunoRochaDev/FrictionTimer/raw/main/screenshots/screenshot_2.jpg" width="30%" />
+  <img src="screenshots/screenshot_1.jpg" width="30%" />
+  <img src="screenshots/screenshot_2.jpg" width="30%" />
+  <img src="screenshots/screenshot_3.jpg" width="30%" />
+  <img src="screenshots/screenshot_4.jpg" width="30%" />
 </div>
 
 ## Download

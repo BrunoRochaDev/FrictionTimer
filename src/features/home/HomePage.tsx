@@ -1,11 +1,18 @@
 import { AppHeader } from "@/components/AppHeader";
-import { useApps, useServiceStatus } from "@/lib/friction";
+import { openExternalUrl, useApps, useServiceStatus } from "@/lib/friction";
 import { AppsSection } from "./apps-section";
 import { PermissionsSection } from "./permissions-section";
+
+const AUTHOR_URL = "https://brunorochamoura.com";
 
 export function HomePage() {
   const apps = useApps();
   const services = useServiceStatus();
+
+  const handleAuthorLinkClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    void openExternalUrl(AUTHOR_URL);
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -27,7 +34,14 @@ export function HomePage() {
         />
       </main>
       <footer className="container-app py-6 text-center text-[10px] uppercase tracking-widest text-muted-foreground">
-        <a href="https://brunorochamoura.com">Made by brunorochamoura.com</a>
+        <a
+          href={AUTHOR_URL}
+          target="_blank"
+          rel="noreferrer"
+          onClick={handleAuthorLinkClick}
+        >
+          Made by brunorochamoura.com
+        </a>
       </footer>
     </div>
   );
