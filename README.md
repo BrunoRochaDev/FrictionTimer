@@ -70,21 +70,6 @@ pnpm tauri android build
 
 Generated APKs are placed under `src-tauri/gen/android/app/build/outputs/apk/`.
 
-### Release signing
-
-Signed release builds use the local file `src-tauri/gen/android/keystore.properties`, which is ignored by git.
-
-For a signed release, point it at a valid keystore:
-
-```properties
-storeFile=/absolute/path/to/android.jks
-storePassword=...
-keyAlias=...
-keyPassword=...
-```
-
-If that file is missing or the `storeFile` path does not exist, the Android build falls back to an unsigned release artifact instead of failing.
-
 ## How it works
 
 1. Friction Timer uses an `AccessibilityService` to detect when a selected app moves to the foreground.
