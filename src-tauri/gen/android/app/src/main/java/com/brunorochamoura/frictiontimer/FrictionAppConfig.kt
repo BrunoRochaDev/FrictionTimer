@@ -1,4 +1,4 @@
-package com.brunorochamoura.friction_timer
+package com.brunorochamoura.frictiontimer
 
 data class FrictionAppConfig(
   val appId: String,

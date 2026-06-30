@@ -1,4 +1,4 @@
-package com.brunorochamoura.friction_timer
+package com.brunorochamoura.frictiontimer
 
 import android.accessibilityservice.AccessibilityService
 import android.content.Intent

@@ -1,4 +1,4 @@
-package com.brunorochamoura.friction_timer
+package com.brunorochamoura.frictiontimer
 
 import android.content.Context
 import android.graphics.PixelFormat

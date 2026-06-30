@@ -1,4 +1,4 @@
-package com.brunorochamoura.friction_timer
+package com.brunorochamoura.frictiontimer
 
 data class FrictionForegroundTransition(
   val dismissActiveOverlay: Boolean = false,

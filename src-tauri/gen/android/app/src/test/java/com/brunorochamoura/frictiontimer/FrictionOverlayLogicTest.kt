@@ -1,4 +1,4 @@
-package com.brunorochamoura.friction_timer
+package com.brunorochamoura.frictiontimer
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

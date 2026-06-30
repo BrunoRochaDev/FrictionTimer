@@ -1,4 +1,4 @@
-package com.brunorochamoura.friction_timer.installedapps
+package com.brunorochamoura.frictiontimer.installedapps
 
 import android.app.Activity
 import android.content.Intent

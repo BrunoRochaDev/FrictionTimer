@@ -1,4 +1,4 @@
-package com.brunorochamoura.friction_timer.permissions
+package com.brunorochamoura.frictiontimer.permissions
 
 import android.app.Activity
 import android.content.ComponentName
@@ -10,7 +10,7 @@ import app.tauri.annotation.InvokeArg
 import app.tauri.annotation.TauriPlugin
 import app.tauri.plugin.Invoke
 import app.tauri.plugin.Plugin
-import com.brunorochamoura.friction_timer.FrictionAccessibilityService
+import com.brunorochamoura.frictiontimer.FrictionAccessibilityService
 
 @InvokeArg
 class OpenSettingsArgs {

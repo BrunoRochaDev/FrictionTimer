@@ -8,7 +8,7 @@ use tauri::{
 use tauri::plugin::PluginHandle;
 
 #[cfg(target_os = "android")]
-const PLUGIN_IDENTIFIER: &str = "com.brunorochamoura.friction_timer.permissions";
+const PLUGIN_IDENTIFIER: &str = "com.brunorochamoura.frictiontimer.permissions";
 
 #[derive(Clone, Copy, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]

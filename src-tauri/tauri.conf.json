@@ -2,7 +2,7 @@
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Friction Timer",
   "version": "0.1.0",
-  "identifier": "com.brunorochamoura.friction_timer",
+  "identifier": "com.brunorochamoura.frictiontimer",
   "build": {
     "beforeDevCommand": "pnpm dev",
     "devUrl": "http://127.0.0.1:1420",
