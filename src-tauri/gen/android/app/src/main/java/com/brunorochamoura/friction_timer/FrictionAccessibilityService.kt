@@ -5,8 +5,10 @@ import android.content.Intent
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
+import android.util.Log
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
+import android.view.accessibility.AccessibilityWindowInfo
 
 class FrictionAccessibilityService : AccessibilityService() {
   private val mainHandler = Handler(Looper.getMainLooper())
@@ -14,6 +16,7 @@ class FrictionAccessibilityService : AccessibilityService() {
   private lateinit var configRepository: FrictionAppConfigRepository
   private lateinit var runtimeState: FrictionRuntimeStateStore
   private lateinit var overlayController: FrictionOverlayController
+  private val foregroundSessionState = FrictionForegroundSessionStateMachine()
 
   private var launcherPackages: Set<String> = emptySet()
   private var pendingForegroundPackageHint: String? = null
@@ -49,23 +52,29 @@ class FrictionAccessibilityService : AccessibilityService() {
     }
 
     if (!Settings.canDrawOverlays(this)) {
-      overlayController.dismiss()
+      dismissOverlay("overlay_permission_revoked")
       return
     }
 
+    if (BuildConfig.DEBUG) {
+      Log.d(
+        TAG,
+        "Accessibility event=${eventTypeName(eventType)} packageHint=${packageName.ifBlank { "<none>" }} activeOverlay=${foregroundSessionState.activeOverlayPackage}",
+      )
+    }
     scheduleForegroundProcessing(packageName)
   }
 
   override fun onInterrupt() {
     if (::overlayController.isInitialized) {
-      overlayController.dismiss()
+      dismissOverlay("service_interrupted")
     }
   }
 
   override fun onDestroy() {
     mainHandler.removeCallbacks(processForegroundRunnable)
     if (::overlayController.isInitialized) {
-      overlayController.dismiss()
+      dismissOverlay("service_destroyed")
     }
     super.onDestroy()
   }
@@ -75,11 +84,11 @@ class FrictionAccessibilityService : AccessibilityService() {
       config.appId,
       FrictionOverlayLogic.cooldownExpiry(System.currentTimeMillis(), config.durationSeconds),
     )
-    overlayController.dismiss()
+    dismissOverlay("user_proceeded:${config.appId}")
   }
 
   private fun handleCancel(config: FrictionAppConfig) {
-    overlayController.dismiss()
+    dismissOverlay("user_cancelled:${config.appId}")
     performGlobalAction(GLOBAL_ACTION_HOME)
   }
 
@@ -90,45 +99,83 @@ class FrictionAccessibilityService : AccessibilityService() {
   }
 
   private fun processForegroundPackage(packageHint: String?) {
-    val activeOverlayPackage = overlayController.activePackage
     val resolvedPackage = resolveForegroundPackage(packageHint)
-    if (activeOverlayPackage != null &&
-      resolvedPackage != null &&
-      resolvedPackage != activeOverlayPackage
-    ) {
-      overlayController.dismiss()
+    if (BuildConfig.DEBUG) {
+      Log.d(
+        TAG,
+        "Processing foreground packageHint=${packageHint ?: "<none>"} resolved=${resolvedPackage ?: "<none>"} root=${normalizePackageLabel(rootInActiveWindow?.packageName?.toString())} state=${foregroundSessionState.debugState()}",
+      )
     }
 
-    if (resolvedPackage == null || isIgnoredPackage(resolvedPackage)) {
+    val transition = foregroundSessionState.onForegroundObserved(resolvedPackage)
+    if (transition.dismissActiveOverlay) {
+      dismissOverlay("confirmed_foreground_exit:${resolvedPackage ?: "<none>"}")
+    }
+
+    if (transition.shouldRecheckForeground) {
+      if (BuildConfig.DEBUG) {
+        Log.d(TAG, "Holding overlay until foreground exit is confirmed")
+      }
+      scheduleForegroundProcessing("")
+    }
+
+    maybeShowOverlayFor(transition.packageToEvaluateForOverlay)
+  }
+
+  private fun maybeShowOverlayFor(packageName: String?) {
+    if (packageName == null || isIgnoredPackage(packageName)) {
       return
     }
 
-    if (overlayController.isShowingFor(resolvedPackage)) {
+    if (overlayController.isShowingFor(packageName)) {
       return
     }
 
-    val config = configRepository.findByAppId(resolvedPackage) ?: return
+    val config = configRepository.findByAppId(packageName) ?: return
     val nowMs = System.currentTimeMillis()
-    if (runtimeState.isInCooldown(resolvedPackage, nowMs)) {
+    if (runtimeState.isInCooldown(packageName, nowMs)) {
       return
     }
 
     val message = runtimeState.nextMessage(
-      appId = resolvedPackage,
+      appId = packageName,
       messages = config.messages,
       fallback = getString(R.string.friction_overlay_fallback_message),
     )
 
-    overlayController.show(config, message)
+    if (overlayController.show(config, message)) {
+      foregroundSessionState.onOverlayShown(config.appId)
+      if (BuildConfig.DEBUG) {
+        Log.d(TAG, "Overlay shown for ${config.appId}")
+      }
+    }
   }
 
   private fun resolveForegroundPackage(packageHint: String?): String? {
+    resolveForegroundPackageFromWindows()?.let { return it }
+
     val rootPackage = normalizePackageCandidate(rootInActiveWindow?.packageName?.toString())
     if (rootPackage != null) {
       return rootPackage
     }
 
     return normalizePackageCandidate(packageHint)
+  }
+
+  private fun resolveForegroundPackageFromWindows(): String? {
+    var bestPackage: String? = null
+    var bestScore = Int.MIN_VALUE
+
+    for (window in windows) {
+      val packageName = normalizePackageCandidate(window.root?.packageName?.toString()) ?: continue
+      val score = foregroundWindowScore(window)
+      if (score > bestScore) {
+        bestScore = score
+        bestPackage = packageName
+      }
+    }
+
+    return bestPackage
   }
 
   private fun resolveLauncherPackages(): Set<String> {
@@ -160,7 +207,44 @@ class FrictionAccessibilityService : AccessibilityService() {
     return packageName == "android" || packageName == "com.android.systemui"
   }
 
+  private fun dismissOverlay(reason: String) {
+    if (BuildConfig.DEBUG) {
+      Log.d(TAG, "Dismissing overlay reason=$reason activeOverlay=${foregroundSessionState.activeOverlayPackage}")
+    }
+    overlayController.dismiss()
+    foregroundSessionState.onOverlayDismissed()
+  }
+
+  private fun foregroundWindowScore(window: AccessibilityWindowInfo): Int {
+    var score = when (window.type) {
+      AccessibilityWindowInfo.TYPE_APPLICATION -> 100
+      AccessibilityWindowInfo.TYPE_INPUT_METHOD -> 50
+      AccessibilityWindowInfo.TYPE_SYSTEM -> 25
+      AccessibilityWindowInfo.TYPE_ACCESSIBILITY_OVERLAY -> 0
+      else -> 10
+    }
+
+    if (window.isActive) {
+      score += 10
+    }
+    if (window.isFocused) {
+      score += 5
+    }
+
+    return score
+  }
+
+  private fun normalizePackageLabel(packageName: String?): String =
+    packageName?.trim().orEmpty().ifBlank { "<none>" }
+
+  private fun eventTypeName(eventType: Int): String = when (eventType) {
+    AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED -> "TYPE_WINDOW_STATE_CHANGED"
+    AccessibilityEvent.TYPE_WINDOWS_CHANGED -> "TYPE_WINDOWS_CHANGED"
+    else -> eventType.toString()
+  }
+
   companion object {
     private const val FOREGROUND_SETTLE_DELAY_MS = 180L
+    private const val TAG = "FrictionAccessSvc"
   }
 }

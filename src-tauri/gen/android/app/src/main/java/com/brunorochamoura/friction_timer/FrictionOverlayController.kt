@@ -28,7 +28,7 @@ class FrictionOverlayController(
   fun isShowingFor(packageName: String): Boolean =
     activeConfig?.appId == packageName && overlayView != null
 
-  fun show(config: FrictionAppConfig, message: String) {
+  fun show(config: FrictionAppConfig, message: String): Boolean {
     dismiss()
 
     val themedContext = ContextThemeWrapper(context, R.style.Theme_friction_timer)
@@ -63,15 +63,22 @@ class FrictionOverlayController(
       windowManager.addView(view, params)
     } catch (ex: Exception) {
       Log.w(TAG, "Failed to show friction overlay", ex)
-      return
+      return false
     }
 
     overlayView = view
     activeConfig = config
+    if (BuildConfig.DEBUG) {
+      Log.d(TAG, "Showing overlay for ${config.appId}")
+    }
     startCountdown(proceedButton, config.waitSeconds)
+    return true
   }
 
   fun dismiss() {
+    if (BuildConfig.DEBUG && (overlayView != null || activeConfig != null)) {
+      Log.d(TAG, "Dismissing overlay for ${activeConfig?.appId}")
+    }
     countDownTimer?.cancel()
     countDownTimer = null
     activeConfig = null
