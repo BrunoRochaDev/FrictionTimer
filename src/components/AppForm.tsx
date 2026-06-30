@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { InstalledAppRowSkeleton } from "@/components/Skeletons";
 import {
+  useApps,
   useAppMutations,
   useInstalledApps,
   type FrictionApp,
@@ -41,6 +42,7 @@ function draftFromApp(app: FrictionApp): FrictionAppDraft {
 
 export function AppForm({ initial }: { initial?: FrictionApp }) {
   const navigate = useNavigate();
+  const { data: existingApps } = useApps();
   const mutations = useAppMutations();
   const isEdit = !!initial;
 
@@ -48,9 +50,15 @@ export function AppForm({ initial }: { initial?: FrictionApp }) {
   const [draft, setDraft] = useState<FrictionAppDraft>(() =>
     initial ? draftFromApp(initial) : DEFAULT_DRAFT,
   );
+  const coveredAppIds = new Set(
+    existingApps
+      .filter((app) => app.id !== initial?.id)
+      .map((app) => app.appId),
+  );
+  const appAlreadyCovered = draft.appId !== initial?.appId && coveredAppIds.has(draft.appId);
 
   async function save() {
-    if (!draft.appId || mutations.saving) return;
+    if (!draft.appId || appAlreadyCovered || mutations.saving) return;
     const clean: FrictionAppDraft = {
       ...draft,
       waitSeconds: Math.max(1, draft.waitSeconds),
@@ -81,10 +89,22 @@ export function AppForm({ initial }: { initial?: FrictionApp }) {
       <Stepper stage={stage} />
 
       {stage === 0 && (
-        <StageApp draft={draft} setDraft={setDraft} isEdit={isEdit} />
+        <StageApp
+          draft={draft}
+          setDraft={setDraft}
+          isEdit={isEdit}
+          coveredAppIds={coveredAppIds}
+          currentAppId={initial?.appId}
+        />
       )}
       {stage === 1 && <StageTime draft={draft} setDraft={setDraft} />}
       {stage === 2 && <StageMessages draft={draft} setDraft={setDraft} />}
+
+      {appAlreadyCovered && (
+        <p className="rounded-md border border-border bg-secondary/40 px-3 py-2 text-xs text-muted-foreground">
+          That app is already covered by another saved entry. Choose a different app to continue.
+        </p>
+      )}
 
       {mutations.error && (
         <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
@@ -116,7 +136,7 @@ export function AppForm({ initial }: { initial?: FrictionApp }) {
           {stage < 2 ? (
             <button
               type="button"
-              disabled={stage === 0 && !draft.appId}
+              disabled={!draft.appId || appAlreadyCovered}
               onClick={() => setStage((stage + 1) as Stage)}
               className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-40 disabled:cursor-not-allowed"
             >
@@ -126,7 +146,7 @@ export function AppForm({ initial }: { initial?: FrictionApp }) {
             <button
               type="button"
               onClick={save}
-              disabled={mutations.saving}
+              disabled={mutations.saving || appAlreadyCovered}
               className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
             >
               {mutations.saving ? "Saving…" : isEdit ? "Save" : "Create"}
@@ -175,10 +195,14 @@ function StageApp({
   draft,
   setDraft,
   isEdit,
+  coveredAppIds,
+  currentAppId,
 }: {
   draft: FrictionAppDraft;
   setDraft: (d: FrictionAppDraft) => void;
   isEdit: boolean;
+  coveredAppIds: Set<string>;
+  currentAppId?: string;
 }) {
   const [query, setQuery] = useState("");
   const { data: apps, loading, pending, error } = useInstalledApps(query);
@@ -218,13 +242,19 @@ function StageApp({
         ) : (
           apps.map((app) => {
             const selected = draft.appId === app.appId;
+            const covered = app.appId !== currentAppId && coveredAppIds.has(app.appId);
             return (
               <li key={app.appId}>
                 <button
                   type="button"
+                  disabled={covered}
                   onClick={() => setDraft({ ...draft, appId: app.appId, name: app.name })}
-                  className={`flex w-full items-center justify-between px-3 py-2.5 text-left transition-colors ${
-                    selected ? "bg-primary/10" : "bg-card hover:bg-secondary"
+                  className={`flex w-full items-center justify-between px-3 py-2.5 text-left transition-colors disabled:cursor-not-allowed ${
+                    covered
+                      ? "bg-secondary/40 text-muted-foreground opacity-60"
+                      : selected
+                        ? "bg-primary/10"
+                        : "bg-card hover:bg-secondary"
                   }`}
                 >
                   <div className="min-w-0">
@@ -233,11 +263,18 @@ function StageApp({
                       {app.appId}
                     </div>
                   </div>
-                  <span
-                    className={`ml-2 h-2.5 w-2.5 shrink-0 rounded-full ${
-                      selected ? "bg-primary" : "bg-border"
-                    }`}
-                  />
+                  <div className="ml-2 flex shrink-0 items-center gap-2">
+                    {covered && (
+                      <span className="rounded-full border border-border px-2 py-0.5 text-[10px] uppercase tracking-wide">
+                        Added
+                      </span>
+                    )}
+                    <span
+                      className={`h-2.5 w-2.5 rounded-full ${
+                        covered ? "bg-muted-foreground/50" : selected ? "bg-primary" : "bg-border"
+                      }`}
+                    />
+                  </div>
                 </button>
               </li>
             );
