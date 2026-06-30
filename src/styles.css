@@ -1,0 +1,92 @@
+@import "tailwindcss" source(none);
+@source "../src";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-aqua: var(--aqua);
+  --color-orange: var(--orange);
+  --font-sans: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* Gruvbox dark palette */
+:root {
+  --radius: 0.5rem;
+  --background: oklch(0.235 0.012 75);        /* #282828 bg */
+  --foreground: oklch(0.895 0.043 91);        /* #ebdbb2 fg */
+  --card: oklch(0.275 0.013 75);              /* #32302f bg0_s */
+  --card-foreground: oklch(0.895 0.043 91);
+  --popover: oklch(0.275 0.013 75);
+  --popover-foreground: oklch(0.895 0.043 91);
+  --primary: oklch(0.83 0.155 89);            /* #fabd2f yellow */
+  --primary-foreground: oklch(0.235 0.012 75);
+  --secondary: oklch(0.32 0.012 80);          /* #3c3836 bg1 */
+  --secondary-foreground: oklch(0.895 0.043 91);
+  --muted: oklch(0.32 0.012 80);
+  --muted-foreground: oklch(0.68 0.022 90);   /* #a89984 gray */
+  --accent: oklch(0.74 0.125 195);            /* #8ec07c-ish aqua */
+  --accent-foreground: oklch(0.235 0.012 75);
+  --destructive: oklch(0.63 0.205 25);        /* #fb4934 red */
+  --destructive-foreground: oklch(0.97 0.02 90);
+  --border: oklch(0.4 0.013 80);              /* #504945 bg2 */
+  --input: oklch(0.4 0.013 80);
+  --ring: oklch(0.83 0.155 89);
+  --success: oklch(0.75 0.155 135);           /* #b8bb26 green */
+  --warning: oklch(0.78 0.155 55);            /* #fe8019 orange */
+  --aqua: oklch(0.79 0.13 175);               /* #8ec07c aqua */
+  --orange: oklch(0.72 0.18 50);              /* #fe8019 */
+}
+
+.dark { color-scheme: dark; }
+
+@layer base {
+  * { border-color: var(--color-border); }
+  /* Reserve scrollbar gutter so toggling tall content doesn't shift layout width. */
+  html { scrollbar-gutter: stable; }
+  html, body { background-color: var(--color-background); color: var(--color-foreground); }
+  body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+  ::selection { background: var(--primary); color: var(--primary-foreground); }
+}
+
+@keyframes friction-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 0.95; }
+}
+
+@utility skeleton {
+  background-color: var(--color-secondary);
+  border-radius: var(--radius-md);
+  animation: friction-pulse 1.4s ease-in-out infinite;
+}
+
+@utility container-app {
+  max-width: 36rem;
+  margin-inline: auto;
+  padding-inline: 1rem;
+}

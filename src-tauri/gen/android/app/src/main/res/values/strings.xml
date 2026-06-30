@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Friction Timer</string>
+    <string name="main_activity_title">Friction Timer</string>
+    <string name="accessibility_service_label">Friction Timer</string>
+    <string name="accessibility_service_description">Allows Friction Timer to detect when selected apps move to the foreground.</string>
+    <string name="friction_overlay_cancel">Cancel</string>
+    <string name="friction_overlay_proceed">Proceed</string>
+    <string name="friction_overlay_wait_seconds">Wait %1$ds</string>
+    <string name="friction_overlay_fallback_message">Take a breath.</string>
+</resources>

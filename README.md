@@ -4,50 +4,94 @@
   <br />
 </div>
 
-**Friction Timer** is a minimal Android self-discipline app that introduces a short delay whenever you open specified apps, helping you resist impulsive usage.
+Friction Timer is an Android app that adds a waiting period before you can use selected apps.
 
-This application helps reduce impulsive app usage by introducing a configurable delay when opening selected apps. It is designed around three core principles:
+When you open an app you've added to the list, Friction Timer displays an overlay on top of it, preventing you from using the app while a countdown runs.
 
-- **Friction:** Introduce a configurable delay before the app can be used.
-- **Minimal UI:** Motivational messages and simple buttons—no fancy animations required.
-- **Customizable:** Add any app you want to target, with independent timers and messages.
+You can wait for the timer to finish or cancel and back out.
+
+The point is simple: make impulsive opens slower.
+
+## What it does
+
+- Adds friction before you can use selected apps
+- Lets you choose a different wait time for each app
+- Lets you set a cooldown before the overlay appears again
+- Shows your own messages on the overlay while the timer runs
 
 ## Screenshots
 
-<div align="center" style="display: flex; justify-content: space-around;">
-  <img src="https://github.com/BrunoRochaDev/FrictionTimer/raw/main/screenshots/screenshot_1.jpg" width="30%" />
-  <img src="https://github.com/BrunoRochaDev/FrictionTimer/raw/main/screenshots/screenshot_2.jpg" width="30%" />
-</div>
+<p align="center">
+  <img src="screenshots/screenshot_1.jpg" width="33%" alt="Screenshot 1" />
+  <img src="screenshots/screenshot_2.jpg" width="33%" alt="Screenshot 2" />
+</p>
 
-## Where To Get
+<p align="center">
+  <img src="screenshots/screenshot_3.jpg" width="33%" alt="Screenshot 3" />
+  <img src="screenshots/screenshot_4.jpg" width="33%" alt="Screenshot 4" />
+</p>
 
-You can download the latest APK from the [Releases](https://github.com/BrunoRochaDev/FrictionTimer/releases) page, or build the app yourself by opening the project in Android Studio and selecting **Build > Build Bundle(s) / APK(s) > Build APK(s)**.
+<p align="center">
+  <img src="screenshots/screenshot_5.jpg" width="33%" alt="Screenshot 5" />
+</p>
 
-## How It Works
+## Download
 
-1. **App Detection:**  
-   Uses an `AccessibilityService` to detect when any target app you’ve added is opened in the foreground.
+Download the latest APK from the [Releases](https://github.com/BrunoRochaDev/FrictionTimer/releases) page.
 
-2. **Overlay & Countdown:**  
-   An overlay appears on top of the target app, preventing interaction until the countdown finishes. The overlay includes:
-   - A configurable motivational message
-   - A disabled "Wait X seconds" button that counts down
-   - A "Cancel" button to dismiss the overlay
+## Build it yourself
 
-   Once the countdown ends, the button changes to "Proceed," allowing the user to interact with the app again.
+This project is set up for Android with Tauri 2.
 
-3. **Cooldown & Reappearance:**  
-   After proceeding, the overlay will reappear the next time the target app is opened **once the configurable cooldown period has elapsed**. This ensures ongoing friction without being permanently intrusive.
+### Prerequisites
 
-4. **Customizable Per App:**  
-   Each target app can have its own wait time, cooldown duration, and list of motivational messages. All settings are accessible via the app’s settings screen.
+- Node.js and `pnpm`
+- Rust stable via `rustup`
+- Android SDK and an emulator or USB-connected device
 
+Install the Rust Android targets once:
 
-## Thanks
+```bash
+rustup target add aarch64-linux-android armv7-linux-androideabi i686-linux-android x86_64-linux-android
+```
+
+### Build from the command line
+
+Install dependencies:
+
+```bash
+pnpm install
+```
+
+Run the app on a connected Android device or emulator:
+
+```bash
+pnpm tauri android dev
+```
+
+Create a release build:
+
+```bash
+pnpm tauri android build
+```
+
+Generated APKs are placed under `src-tauri/gen/android/app/build/outputs/apk/`.
+
+## How it works
+
+1. Friction Timer uses an `AccessibilityService` to detect when a selected app moves to the foreground.
+2. It shows an overlay that blocks interaction until the countdown finishes.
+3. The overlay includes:
+   - a message from your configured list
+   - a disabled button that counts down and later changes to "Proceed"
+   - a "Cancel" button
+4. After you proceed, the overlay can appear again the next time that app opens once its cooldown has expired.
+5. Each app can have its own wait time, cooldown, and messages.
+
+## Credits
 
 Thanks to [digipaws](https://github.com/nethical6/digipaws) for the inspiration. Their source code served as a reference for the implementation of this app.
 
 ## License
 
 This project is distributed under the AGPLv3 License. See the [LICENSE](https://github.com/BrunoRochaDev/FrictionTimer/blob/main/LICENSE) file for details.
-
