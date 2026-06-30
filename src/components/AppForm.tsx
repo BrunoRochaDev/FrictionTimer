@@ -141,24 +141,29 @@ export function AppForm({ initial }: { initial?: FrictionApp }) {
 function Stepper({ stage }: { stage: Stage }) {
   const items = ["App", "Timing", "Messages"];
   return (
-    <ol className="flex items-center gap-2 text-[11px] uppercase tracking-widest">
+    <ol className="grid grid-cols-3 gap-2 text-[11px] uppercase tracking-widest">
       {items.map((label, i) => {
         const active = i === stage;
         return (
-          <li key={label} className="flex items-center gap-2">
+          <li key={label} className="min-w-0">
             <span
-              className={`inline-flex h-5 w-5 items-center justify-center rounded-full border text-[10px] font-bold ${
+              className={`flex w-full items-center justify-center gap-2 rounded-md border px-3 py-2 text-center ${
                 active
-                  ? "border-primary bg-primary text-primary-foreground"
+                  ? "border-primary bg-primary/10 text-foreground"
                   : "border-border text-muted-foreground"
               }`}
             >
-              {i + 1}
+              <span
+                className={`inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-bold ${
+                  active
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border text-muted-foreground"
+                }`}
+              >
+                {i + 1}
+              </span>
+              <span className="truncate">{label}</span>
             </span>
-            <span className={active ? "text-foreground" : "text-muted-foreground"}>
-              {label}
-            </span>
-            {i < items.length - 1 && <span className="text-border">/</span>}
           </li>
         );
       })}
