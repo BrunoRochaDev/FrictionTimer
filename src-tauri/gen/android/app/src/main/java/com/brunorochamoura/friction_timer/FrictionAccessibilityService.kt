@@ -2,20 +2,15 @@ package com.brunorochamoura.friction_timer
 
 import android.accessibilityservice.AccessibilityService
 import android.content.Intent
-import android.os.Handler
-import android.os.Looper
 import android.provider.Settings
 import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 
 class FrictionAccessibilityService : AccessibilityService() {
-  private val mainHandler = Handler(Looper.getMainLooper())
-
   private lateinit var configRepository: FrictionAppConfigRepository
   private lateinit var runtimeState: FrictionRuntimeStateStore
   private lateinit var overlayController: FrictionOverlayController
 
-  private var currentForegroundPackage: String? = null
   private var launcherPackages: Set<String> = emptySet()
 
   override fun onServiceConnected() {
@@ -40,10 +35,6 @@ class FrictionAccessibilityService : AccessibilityService() {
     val packageName = event.packageName?.toString()?.trim().orEmpty()
     if (packageName.isBlank()) {
       return
-    }
-
-    if (!isIgnoredPackage(packageName)) {
-      currentForegroundPackage = packageName
     }
 
     if (!::overlayController.isInitialized) {
@@ -93,7 +84,6 @@ class FrictionAccessibilityService : AccessibilityService() {
   }
 
   override fun onDestroy() {
-    mainHandler.removeCallbacksAndMessages(null)
     if (::overlayController.isInitialized) {
       overlayController.dismiss()
     }
@@ -110,34 +100,7 @@ class FrictionAccessibilityService : AccessibilityService() {
 
   private fun handleCancel(config: FrictionAppConfig) {
     overlayController.dismiss()
-    performGlobalAction(GLOBAL_ACTION_BACK)
-    verifyAppClosedOrGoHome(config.appId, HOME_FALLBACK_ATTEMPTS)
-  }
-
-  private fun verifyAppClosedOrGoHome(targetPackage: String, attemptsRemaining: Int) {
-    mainHandler.postDelayed({
-      val activePackage = resolveActivePackage()?.takeUnless(::isTransientSystemPackage)
-      when {
-        activePackage == targetPackage && attemptsRemaining <= 1 -> {
-          performGlobalAction(GLOBAL_ACTION_HOME)
-        }
-        activePackage == targetPackage -> {
-          verifyAppClosedOrGoHome(targetPackage, attemptsRemaining - 1)
-        }
-        activePackage == null && attemptsRemaining > 1 -> {
-          verifyAppClosedOrGoHome(targetPackage, attemptsRemaining - 1)
-        }
-      }
-    }, HOME_FALLBACK_DELAY_MS)
-  }
-
-  private fun resolveActivePackage(): String? {
-    val rootPackage = rootInActiveWindow?.packageName?.toString()?.trim()
-    if (!rootPackage.isNullOrBlank()) {
-      return rootPackage
-    }
-
-    return currentForegroundPackage
+    performGlobalAction(GLOBAL_ACTION_HOME)
   }
 
   private fun resolveLauncherPackages(): Set<String> {
@@ -159,10 +122,5 @@ class FrictionAccessibilityService : AccessibilityService() {
 
   private fun isTransientSystemPackage(packageName: String): Boolean {
     return packageName == "android" || packageName == "com.android.systemui"
-  }
-
-  companion object {
-    private const val HOME_FALLBACK_DELAY_MS = 250L
-    private const val HOME_FALLBACK_ATTEMPTS = 3
   }
 }
