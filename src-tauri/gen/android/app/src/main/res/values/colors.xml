@@ -7,4 +7,12 @@
     <color name="teal_700">#FF018786</color>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="friction_overlay_scrim">#D9171717</color>
+    <color name="friction_overlay_panel">#FF23211D</color>
+    <color name="friction_overlay_message">#FFF6F1E7</color>
+    <color name="friction_overlay_primary">#FFE9B44C</color>
+    <color name="friction_overlay_primary_disabled">#FF7A715C</color>
+    <color name="friction_overlay_primary_text">#FF20180B</color>
+    <color name="friction_overlay_secondary">#FFF1EDE3</color>
+    <color name="friction_overlay_secondary_text">#FF1E1911</color>
 </resources>
